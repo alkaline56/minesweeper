@@ -1,0 +1,88 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+import pandas as pd
+from scipy.ndimage import convolve
+#from graphics import *
+
+
+
+def printField(x):
+    firstString = "0"
+    for i in range(len(x[1, :])):
+        firstString += str(i+1)
+    print(firstString)
+    for i in range(len(x[:, 1])):
+        rowString = str(i+1)
+        for j in range(len(x[i, :])):
+            rowString += str(x[i, j])
+        print(rowString)
+
+
+def setMine(x):
+    nRow = random.randint(0, len(x[:, 1])-1)
+    nCol = random.randint(0, len(x[1, :])-1)
+    if x[nRow,nCol] == 9:
+        return setMine(x)
+    else:
+        x[nRow,nCol] = 9
+        return x
+
+class GameZone:
+
+    def __init__(self):
+        dimensions = input("What dimension board?")
+        mineNum = input("How many mines?")
+
+        rows, columns = dimensions.split("x")
+        self.minefield = np.zeros( (int(rows), int(columns)),dtype=np.int32)
+
+        for i in range(int(mineNum)):
+            self.minefield = setMine(self.minefield)
+        kernel = np.array([[1,1,1],[1,0,1],[1,1,1]])
+        self.numField = convolve(self.minefield, kernel, mode='constant')
+
+        for i in range(len(self.minefield[:,1])):
+            for j in range(len(self.minefield[1,:])):
+                if self.minefield[i,j] == 0:
+                    self.minefield[i,j] = self.numField[i,j]/9
+        printField(self.minefield)
+        print("")
+
+        self.currentField = np.zeros((int(rows),int(columns)),dtype='<U1')
+
+        for i in range(len(self.currentField[:,1])):
+            for j in range(len(self.currentField[1,:])):
+                self.currentField[i,j] = '?'
+
+        printField(self.currentField)
+
+    def exposeVal(self, r, c):
+        exposedval = self.minefield[r, c]
+        self.currentField[r, c] = exposedval
+        printField(self.currentField)
+        return exposedval
+
+
+play = True
+
+while play:
+    noExplosion = True
+    action = input("n for new game, q to quit ")
+    if action == "q":
+        play = False
+    else:
+        field = GameZone()
+        while noExplosion:
+            action = input("What row x column? (r to new game) ")
+            if action == "r":
+                noExplosion = False
+
+            else:
+                row, column = action.split("x")
+                row = int(row) - 1
+                column = int(column) - 1
+                exposedVal = field.exposeVal(row, column)
+                if exposedVal == 9:
+                    noExplosion = False
+                    print("You revealed a mine!!!!")
