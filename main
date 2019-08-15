@@ -4,7 +4,6 @@ from scipy.ndimage import convolve
 from collections import deque
 import math
 
-
 def printField(x):
     firstString = "0"
     for i in range(len(x[1, :])):
@@ -125,6 +124,7 @@ class GameZone:
         self.currentField = np.zeros((int(rows), int(columns)), dtype='<U1')
 
         for i in range(len(self.currentField[:, 1])):
+
             for j in range(len(self.currentField[1, :])):
                 self.currentField[i,j] = '?'
 
@@ -132,6 +132,7 @@ class GameZone:
 
     def exposeVal(self, r, c):
         exposedval = self.minefield[r, c]
+
         exposedlist = [[r, c]]
         if self.minefield[r, c] == 0:
             exposedlist = find_connected(self.minefield, exposedlist)
@@ -165,3 +166,4 @@ while play:
                 if exposedVal == 9:
                     noExplosion = False
                     print("You revealed a mine!!!!")
+
