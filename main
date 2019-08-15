@@ -1,7 +1,8 @@
 import numpy as np
 import random
 from scipy.ndimage import convolve
-
+from collections import deque
+import math
 
 def printField(x):
     firstString = "0"
@@ -15,14 +16,89 @@ def printField(x):
         print(rowString)
 
 
+# should return coordinates URDL (0000) where 1 means there is a value in that location in the matrix
+def look_around(dfield, r, c):
+    valueFind = dfield[r, c]
+    foundValues = 0
+    fieldSize = dfield.shape
+
+    # Up 0001
+    for x in range(4):
+        row = r - int(round(math.cos(math.pi*x/2)))
+        column = c + int(round(math.sin(math.pi*x/2)))
+        if (0 <= row < fieldSize[0]) and (0 <= column < fieldSize[1]):
+            if dfield[row, column] == valueFind:
+                foundValues = foundValues | int(math.pow(2, x))
+    print(foundValues)
+    return foundValues
+
+
+# should return a list of all proximal identical values
+def find_connected(field, thelist):
+    q = deque()
+    aroundings = look_around(field, thelist[0][0], thelist[0][1])
+    if aroundings >= 8:
+        aroundings -= 8
+        coord = [thelist[0][0], thelist[0][1] - 1]
+        q.append(coord)
+        thelist.append(coord)
+    if aroundings >= 4:
+        aroundings -= 4
+        coord = [thelist[0][0] + 1, thelist[0][1]]
+        q.append(coord)
+        thelist.append(coord)
+    if aroundings >= 2:
+        aroundings -= 2
+        coord = [thelist[0][0], thelist[0][1] + 1]
+        q.append(coord)
+        thelist.append(coord)
+    if aroundings >= 1:
+        aroundings -= 1
+        coord = [thelist[0][0] - 1, thelist[0][1]]
+        q.append(coord)
+        thelist.append(coord)
+    while 0 < len(q):
+        coord = q.popleft()
+        print(coord)
+        aroundings = look_around(field, coord[0], coord[1])
+        if aroundings >= 8:
+            aroundings -= 8
+            subcoord = [coord[0], coord[1] - 1]
+            if subcoord not in thelist:
+                q.append(subcoord)
+                thelist.append(subcoord)
+        if aroundings >= 4:
+            aroundings -= 4
+            subcoord = [coord[0] + 1, coord[1]]
+            if subcoord not in thelist:
+                q.append(subcoord)
+                thelist.append(subcoord)
+        if aroundings >= 2:
+            aroundings -= 2
+            subcoord = [coord[0], coord[1] + 1]
+            if subcoord not in thelist:
+                q.append(subcoord)
+                thelist.append(subcoord)
+        if aroundings >= 1:
+            aroundings -= 1
+            subcoord = [coord[0] - 1, coord[1]]
+            if subcoord not in thelist:
+                q.append(subcoord)
+                thelist.append(subcoord)
+    return thelist
+
+
+
+
 def setMine(x):
     nRow = random.randint(0, len(x[:, 1])-1)
     nCol = random.randint(0, len(x[1, :])-1)
-    if x[nRow,nCol] == 9:
+    if x[nRow, nCol] == 9:
         return setMine(x)
     else:
-        x[nRow,nCol] = 9
+        x[nRow, nCol] = 9
         return x
+
 
 class GameZone:
 
@@ -48,19 +124,21 @@ class GameZone:
         self.currentField = np.zeros((int(rows), int(columns)), dtype='<U1')
 
         for i in range(len(self.currentField[:, 1])):
-            for j in range(len(self.currentField[1,:])):
+
+            for j in range(len(self.currentField[1, :])):
                 self.currentField[i,j] = '?'
 
         printField(self.currentField)
 
     def exposeVal(self, r, c):
         exposedval = self.minefield[r, c]
-        exposedlist = [[self.minefield[r, c]], [r], [c]]
-        if exposedlist[0][0] == 0:
-            print("yay")
 
-        for i in range(len(exposedlist[0])):
-            self.currentField[exposedlist[1][i], exposedlist[2][i]] = self.minefield[exposedlist[1][i], exposedlist[2][i]]
+        exposedlist = [[r, c]]
+        if self.minefield[r, c] == 0:
+            exposedlist = find_connected(self.minefield, exposedlist)
+
+        for i in range(len(exposedlist)):
+            self.currentField[exposedlist[i][0], exposedlist[i][1]] = self.minefield[exposedlist[i][0], exposedlist[i][1]]
 
         return exposedval
 
