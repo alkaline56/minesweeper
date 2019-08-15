@@ -4,6 +4,7 @@ from scipy.ndimage import convolve
 from collections import deque
 import math
 
+# prints the minesweeper field in the console
 def printField(x):
     firstString = "0"
     for i in range(len(x[1, :])):
@@ -16,7 +17,7 @@ def printField(x):
         print(rowString)
 
 
-# should return coordinates URDL (0000) where 1 means there is a value in that location in the matrix
+# should return 4 bit coordinates URDL (0000) where 1 means there is a value in that location in the matrix
 def look_around(dfield, r, c):
     valueFind = dfield[r, c]
     foundValues = 0
@@ -33,7 +34,7 @@ def look_around(dfield, r, c):
     return foundValues
 
 
-# should return a list of all proximal identical values
+# returns a list of coordinates for all proximal identical values
 def find_connected(field, thelist):
     q = deque()
     aroundings = look_around(field, thelist[0][0], thelist[0][1])
@@ -88,8 +89,7 @@ def find_connected(field, thelist):
     return thelist
 
 
-
-
+# sets a mine (9 value) on a matrix and makes sure there isn't already a value there
 def setMine(x):
     nRow = random.randint(0, len(x[:, 1])-1)
     nCol = random.randint(0, len(x[1, :])-1)
@@ -100,6 +100,7 @@ def setMine(x):
         return x
 
 
+# contains the main controls for the minesweeper field
 class GameZone:
 
     def __init__(self):
@@ -118,13 +119,10 @@ class GameZone:
             for j in range(len(self.minefield[1,:])):
                 if self.minefield[i,j] == 0:
                     self.minefield[i,j] = self.numField[i,j]/9
-        printField(self.minefield)
-        print("")
 
         self.currentField = np.zeros((int(rows), int(columns)), dtype='<U1')
 
         for i in range(len(self.currentField[:, 1])):
-
             for j in range(len(self.currentField[1, :])):
                 self.currentField[i,j] = '?'
 
@@ -132,7 +130,6 @@ class GameZone:
 
     def exposeVal(self, r, c):
         exposedval = self.minefield[r, c]
-
         exposedlist = [[r, c]]
         if self.minefield[r, c] == 0:
             exposedlist = find_connected(self.minefield, exposedlist)
@@ -145,6 +142,7 @@ class GameZone:
 
 play = True
 
+# main loop
 while play:
     noExplosion = True
     action = input("n for new game, q to quit ")
@@ -166,4 +164,3 @@ while play:
                 if exposedVal == 9:
                     noExplosion = False
                     print("You revealed a mine!!!!")
-
